@@ -1,5 +1,5 @@
-streamlit
-python-dotenv
-flask
-requests
-google-cloud-translate
+streamlit==1.39.0
+flask==3.0.3
+requests==2.32.3
+googletrans==4.0.0-rc1
+python-dotenv==1.0.1
