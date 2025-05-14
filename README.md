@@ -2,14 +2,6 @@
 
 **Smart Travel Companion Powered by Multi-Agent Collaboration**
 
-
-## 📸 Init
-
-![Init Image](https://media.licdn.com/dms/image/v2/D5622AQGtBESqSfcjsQ/feedshare-shrink_1280/B56ZY5c2cXH0Ak-/0/1744720592440?e=2147483647&v=beta&t=9JCK9BHTB0oTDTxXxCinQMdZocjALKkSNt9yYgnXBAg)  
-*This image visually represents A2A and MCP protocols that form the core of The Traveler’s Pocket Pal.*
-
----
-
 ## 📖 Overview
 
 This document provides a comprehensive specification and setup plan for **The Traveler’s Pocket Pal **, a lightweight, AI-powered web application designed to assist travelers abroad.
@@ -28,7 +20,11 @@ The project demonstrates the **A2A (Agent-to-Agent)** protocol for multi-agent c
     - _Example_: “Can I have this to go?” in Spanish → “¿Puedo llevar esto para llevar?”
 
 ---
+## 📸 Init
 
+![Init Image](https://media.licdn.com/dms/image/v2/D5622AQGtBESqSfcjsQ/feedshare-shrink_1280/B56ZY5c2cXH0Ak-/0/1744720592440?e=2147483647&v=beta&t=9JCK9BHTB0oTDTxXxCinQMdZocjALKkSNt9yYgnXBAg)  
+*This image visually represents A2A and MCP protocols that form the core of The Traveler’s Pocket Pal.*
+---
 ## 🎯 Purpose
 
 - **Demonstrate A2A Protocol**: Showcases how three agents collaborate, with Agent 1 (Orchestrator) delegating tasks to Agent 2 (Spot Finder) and Agent 3 (Phrase Translator).
