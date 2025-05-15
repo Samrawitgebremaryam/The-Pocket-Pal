@@ -1,6 +1,0 @@
-{
-  "name": "Spot Finder Agent",
-  "description": "Suggests spots to eat, visit, or shop using the OpenStreetMap Nominatim API, providing brief, interesting recommendations.",
-  "endpoint": "http://localhost:5002/spot_finder",
-  "capabilities": ["location_recommendation", "place_search"]
-}

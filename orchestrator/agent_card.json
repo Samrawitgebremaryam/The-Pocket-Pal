@@ -1,6 +1,0 @@
-{
-  "name": "Orchestrator Agent",
-  "description": "Interprets user inputs, delegates tasks to Spot Finder and Phrase Translator agents, and handles general queries using Gemini LLM.",
-  "endpoint": "http://localhost:5001/orchestrator",
-  "capabilities": ["task_orchestration", "input_parsing", "llm_query"]
-}

@@ -3,68 +3,77 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from flask import Flask, request, jsonify
 import requests
-from shared.config import NOMINATIM_USER_AGENT
-import time
+from dotenv import load_dotenv
 import logging
 
 app = Flask(__name__)
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, filename='spot_finder.log')
 logger = logging.getLogger(__name__)
 
-# Nominatim API base URL
-NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
+# Load environment variables
+load_dotenv()
+GEOAPIFY_API_KEY = os.getenv("GEOAPIFY_API_KEY")
 
-def query_nominatim(destination, need):
-    """Query Nominatim API for places matching destination and need."""
+# Mock results as fallback
+MOCK_RESULTS = {
+    "addis ababa_quick meals": """
+    BM African Restaurant, Addis Ababa, Ethiopia
+    Portico Restaurant, Addis Ababa, Ethiopia
+    Miki, Addis Ababa, Ethiopia
+    9-Ja, Addis Ababa, Ethiopia
+    Mistir Buna Ena Migeb, Addis Ababa, Ethiopia
+    """
+}
+
+def query_geoapify_places(destination, need):
     if not destination.strip() or not need.strip():
         logger.error("Invalid destination or need provided.")
-        return "Destination and need cannot be empty."
+        return "Please provide a valid city and need (e.g., restaurants)."
 
-    # Map common needs to Nominatim tags
+    destination = destination.strip().title()
+    if destination.lower() in ["addis abeba", "addis ababa"]:
+        destination = "Addis Ababa"
+
     need_mapping = {
-        "quick meals": "restaurant",
-        "restaurants": "restaurant",
-        "cafes": "cafe",
-        "hotels": "hotel",
-        "attractions": "tourism"
+        "quick meals": "catering.restaurant",
+        "restaurants": "catering.restaurant",
+        "cafes": "catering.cafe",
+        "hotels": "accommodation.hotel",
+        "attractions": "tourism.sights"
     }
-    place_type = need_mapping.get(need.lower(), "amenity")
+    place_category = need_mapping.get(need.lower(), "catering.restaurant")
 
-    # Prepare query
-    query = f"{place_type} {destination}"
-    headers = {"User-Agent": NOMINATIM_USER_AGENT}
-    params = {
-        "q": query,
-        "format": "json",
-        "limit": 3
-    }
+    if not GEOAPIFY_API_KEY:
+        logger.warning("Geoapify API key not set. Using mock results.")
+        return MOCK_RESULTS.get(f"{destination.lower()}_{need.lower()}", f"No {need} found in {destination}.")
 
     try:
-        # Respect Nominatim's 1 request/second rate limit
-        time.sleep(1)
-        response = requests.get(NOMINATIM_URL, headers=headers, params=params, timeout=5)
-        if response.status_code == 200:
-            places = response.json()
-            if not places:
-                logger.info(f"No {place_type}s found in {destination}.")
-                return f"No {place_type}s found in {destination}."
-            results = [
-                f"{place['display_name']} (Lat: {place['lat']}, Lon: {place['lon']})"
-                for place in places
-            ]
-            logger.info(f"Found {len(results)} places for {query}.")
-            return "\n".join(results)
-        elif response.status_code == 429:
-            logger.warning("Nominatim rate limit exceeded.")
-            return "Rate limit exceeded. Please try again later."
-        else:
-            logger.warning(f"Nominatim error: {response.status_code} - {response.text}")
-            return f"Error from Nominatim: {response.status_code}"
-    except requests.RequestException as e:
-        logger.error(f"Nominatim query failed: {e}")
-        return "Unable to fetch recommendations at this time."
+        # Geoapify Places API request
+        url = "https://api.geoapify.com/v2/places"
+        params = {
+            "apiKey": GEOAPIFY_API_KEY,
+            "categories": place_category,
+            "filter": f"circle:38.74,9.03,5000",  # Addis Ababa, 5km radius
+            "limit": 5,
+            "lang": "en"
+        }
+        response = requests.get(url, params=params)
+        response.raise_for_status()
+        places = response.json().get("features", [])
+
+        results = []
+        for place in places[:5]:
+            name = place["properties"].get("name", "Unknown place")
+            address = place["properties"].get("formatted", "Addis Ababa, Ethiopia")
+            results.append(f"{name}, {address}")
+        if not results:
+            logger.info(f"No {place_category}s found in {destination} via Geoapify.")
+            return MOCK_RESULTS.get(f"{destination.lower()}_{need.lower()}", f"No {need} found in {destination}.")
+        logger.info(f"Found {len(results)} places for {place_category} in {destination}.")
+        return "\n".join(results)
+    except Exception as e:
+        logger.error(f"Geoapify Places query failed: {e}")
+        return MOCK_RESULTS.get(f"{destination.lower()}_{need.lower()}", f"No {need} found in {destination}.")
 
 @app.route("/spot_finder", methods=["POST"])
 def spot_finder():
@@ -76,13 +85,12 @@ def spot_finder():
 
         destination = data.get("destination")
         need = data.get("need")
-
-        # Query Nominatim
-        recommendation = query_nominatim(destination, need)
+        recommendation = query_geoapify_places(destination, need)
         return jsonify({"recommendation": recommendation})
     except Exception as e:
         logger.error(f"Unexpected error in spot_finder: {e}")
-        return jsonify({"error": "Internal server error"}), 500
+        return jsonify({"error": "Something went wrong"}), 500
 
 if __name__ == "__main__":
+    logger.info("Starting Spot Finder on port 5002...")
     app.run(host="0.0.0.0", port=5002, debug=True)

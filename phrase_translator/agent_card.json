@@ -1,6 +1,0 @@
-{
-  "name": "Phrase Translator Agent",
-  "description": "Translates user-requested phrases into the local language using the googletrans library, presenting results clearly.",
-  "endpoint": "http://localhost:5003/phrase_translator",
-  "capabilities": ["phrase_translation", "language_conversion"]
-}
